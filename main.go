@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -19,35 +18,39 @@ type Reign struct {
 	Days     int    `json:"days"`
 }
 
-func scrape(url string) map[string][]Reign {
+func scrape(url string) (map[string][]Reign, error) {
 	reigns := make(map[string][]Reign)
 
 	res, err := http.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+		return nil, fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	tables := doc.Find("table.mw-datatable")
 	if tables.Length() != 1 {
-		log.Fatalf("expected 1 table, found %d", tables.Length())
+		return nil, fmt.Errorf("expected 1 table, found %d", tables.Length())
 	}
 	t := tables.First()
 
 	rows := t.Find("tr:not([style])")
 	if rows.Length() == 0 {
-		log.Fatalf("no rows found")
+		return nil, fmt.Errorf("no rows found")
 	}
 
 	rows.Each(func(i int, r *goquery.Selection) {
+		if err != nil {
+			return
+		}
+
 		// Skip the header rows
 		if i <= 1 {
 			return
@@ -72,9 +75,12 @@ func scrape(url string) map[string][]Reign {
 			case 3:
 				location = cleanString(c.Text())
 			case 6:
-				days = cleanDays(c.Text())
+				days, err = cleanDays(c.Text())
 			}
 		})
+		if err != nil {
+			return
+		}
 
 		reign := Reign{
 			Date:     date,
@@ -85,8 +91,11 @@ func scrape(url string) map[string][]Reign {
 
 		reigns[name] = append(reigns[name], reign)
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return reigns
+	return reigns, nil
 }
 
 func cleanString(s string) string {
@@ -97,9 +106,9 @@ func cleanString(s string) string {
 	return strings.TrimRight(s, "\n")
 }
 
-func cleanDays(s string) int {
+func cleanDays(s string) (int, error) {
 	if strings.HasPrefix(s, "<1") {
-		return 0
+		return 0, nil
 	}
 
 	mapping := func(r rune) rune {
@@ -116,25 +125,25 @@ func cleanDays(s string) int {
 
 	days, err := strconv.Atoi(s)
 	if err != nil {
-		log.Fatal("error:", err)
+		return 0, fmt.Errorf("failed to convert %q to int: %v", s, err)
 	}
 
-	return days
+	return days, nil
 }
 
 func createJson(reigns map[string][]Reign, fileName string) error {
-	file, err := os.Create(fileName)
+	f, err := os.Create(fileName)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer f.Close()
 
 	b, err := json.Marshal(reigns)
 	if err != nil {
 		return err
 	}
 
-	_, err = file.Write(b)
+	_, err = f.Write(b)
 	if err != nil {
 		return err
 	}
@@ -144,7 +153,11 @@ func createJson(reigns map[string][]Reign, fileName string) error {
 
 func main() {
 	url := "https://en.wikipedia.org/wiki/List_of_WWE_Women's_Champions_(1956-2010)"
-	reigns := scrape(url)
+	reigns, err := scrape(url)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error scraping %s: %s", url, err)
+		os.Exit(1)
+	}
 
 	if err := createJson(reigns, "data/reigns.json"); err != nil {
 		fmt.Fprintf(os.Stderr, "error creating file %q: %v\n", "reigns.json", err)
