@@ -152,15 +152,31 @@ func createJson(reigns map[string][]Reign, fileName string) error {
 }
 
 func main() {
-	url := "https://en.wikipedia.org/wiki/List_of_WWE_Women's_Champions_(1956-2010)"
+	if len(os.Args) == 1 {
+		fmt.Fprintln(os.Stderr, "Usage: scrapewwe \"<wiki_url>\" [file.json]")
+		os.Exit(1)
+	}
+
+	fmt.Println("?")
+	url := os.Args[1]
+
+	var fileName string
+	if len(os.Args) > 2 {
+		fileName = os.Args[2]
+	} else {
+		fileName = "reigns.json"
+	}
+
+	fmt.Println("??")
+
 	reigns, err := scrape(url)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error scraping %s: %s", url, err)
 		os.Exit(1)
 	}
 
-	if err := createJson(reigns, "data/reigns.json"); err != nil {
-		fmt.Fprintf(os.Stderr, "error creating file %q: %v\n", "reigns.json", err)
+	if err := createJson(reigns, fileName); err != nil {
+		fmt.Fprintf(os.Stderr, "error creating file %q: %v\n", fileName, err)
 		os.Exit(1)
 	}
 }
