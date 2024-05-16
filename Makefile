@@ -1,5 +1,2 @@
 build:
-	@go build -o bin/scrapewwe main.go
-
-run:build
-	@bin/scrapewwe
+	@go build -o bin/scraperwwe main.go

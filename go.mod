@@ -1,4 +1,4 @@
-module github.com/estevesnp/scrapewwe
+module github.com/estevesnp/scraperwwe
 
 go 1.22.3
 
