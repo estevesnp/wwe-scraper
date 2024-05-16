@@ -103,7 +103,7 @@ func cleanString(s string) string {
 		s = s[:idx]
 	}
 
-	return strings.TrimRight(s, "\n")
+	return strings.TrimSpace(s)
 }
 
 func cleanDays(s string) (int, error) {
@@ -113,7 +113,7 @@ func cleanDays(s string) (int, error) {
 
 	mapping := func(r rune) rune {
 		switch r {
-		case ',', '<', '\n':
+		case ',', '<', '+', '\n':
 			return ' '
 		default:
 			return r
@@ -157,7 +157,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("?")
 	url := os.Args[1]
 
 	var fileName string
@@ -166,8 +165,6 @@ func main() {
 	} else {
 		fileName = "reigns.json"
 	}
-
-	fmt.Println("??")
 
 	reigns, err := scrape(url)
 	if err != nil {
