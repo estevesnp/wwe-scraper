@@ -113,7 +113,7 @@ func cleanDays(s string) (int, error) {
 
 	mapping := func(r rune) rune {
 		switch r {
-		case ',', '<', '+', '\n':
+		case ',', '+', '\n':
 			return ' '
 		default:
 			return r
