@@ -2,6 +2,8 @@
 
 This is a simple webscraper that scrapes the WWE Wikipedia page and gets the information of all the champions from a specific belt.
 
+It uses the [goquery](https://github.com/PuerkitoBio/goquery) package to parse the HTML.
+
 ## Installation
 
 You need to have Go installed. Afterwards, run the following command:
