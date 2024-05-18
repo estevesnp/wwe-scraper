@@ -12,14 +12,15 @@ import (
 )
 
 type Reign struct {
+	Name     string `json:"name"`
 	Date     string `json:"date"`
 	Event    string `json:"event"`
 	Location string `json:"location"`
 	Days     int    `json:"days"`
 }
 
-func scrape(url string) (map[string][]Reign, error) {
-	reigns := make(map[string][]Reign)
+func scrape(url string) ([]Reign, error) {
+	reigns := []Reign{}
 
 	res, err := http.Get(url)
 	if err != nil {
@@ -46,7 +47,7 @@ func scrape(url string) (map[string][]Reign, error) {
 		return nil, fmt.Errorf("no rows found")
 	}
 
-	rows.Each(func(i int, r *goquery.Selection) {
+	rows.Each(func(i int, row *goquery.Selection) {
 		if err != nil {
 			return
 		}
@@ -56,40 +57,27 @@ func scrape(url string) (map[string][]Reign, error) {
 			return
 		}
 
-		var (
-			name     string
-			date     string
-			event    string
-			location string
-			days     int
-		)
+		var r Reign
 
-		r.Find("td").Each(func(j int, c *goquery.Selection) {
+		row.Find("td").Each(func(j int, c *goquery.Selection) {
 			switch j {
 			case 0:
-				name = cleanString(c.Text())
+				r.Name = cleanString(c.Text())
 			case 1:
-				date = cleanString(c.Text())
+				r.Date = cleanString(c.Text())
 			case 2:
-				event = cleanString(c.Text())
+				r.Event = cleanString(c.Text())
 			case 3:
-				location = cleanString(c.Text())
+				r.Location = cleanString(c.Text())
 			case 6:
-				days, err = cleanDays(c.Text())
+				r.Days, err = cleanDays(c.Text())
 			}
 		})
 		if err != nil {
 			return
 		}
 
-		reign := Reign{
-			Date:     date,
-			Event:    event,
-			Location: location,
-			Days:     days,
-		}
-
-		reigns[name] = append(reigns[name], reign)
+		reigns = append(reigns, r)
 	})
 	if err != nil {
 		return nil, err
@@ -131,7 +119,7 @@ func cleanDays(s string) (int, error) {
 	return days, nil
 }
 
-func createJson(reigns map[string][]Reign, fileName string) error {
+func createJson(reigns []Reign, fileName string) error {
 	f, err := os.Create(fileName)
 	if err != nil {
 		return err
