@@ -1,4 +1,4 @@
-module github.com/estevesnp/scraperwwe
+module github.com/estevesnp/wwe-scraper
 
 go 1.22.3
 

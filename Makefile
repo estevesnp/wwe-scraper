@@ -1,2 +1,2 @@
 build:
-	@go build -o bin/scraperwwe main.go
+	@go build -o bin/wwe-scraper main.go
