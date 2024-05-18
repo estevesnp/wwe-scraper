@@ -126,7 +126,7 @@ func createJson(reigns []Reign, fileName string) error {
 	}
 	defer f.Close()
 
-	b, err := json.Marshal(reigns)
+	b, err := json.MarshalIndent(reigns, "", "    ")
 	if err != nil {
 		return err
 	}
